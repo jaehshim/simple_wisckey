@@ -1,0 +1,11 @@
+INCLUDES= wisc.h
+SRCS= init_test.cpp
+
+
+all: init_test
+
+sample: init_test.cpp
+	g++ -lleveldb -o $@ $< 
+
+clean:
+	rm -f init_test
