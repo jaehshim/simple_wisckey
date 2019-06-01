@@ -4,6 +4,7 @@
 #include <iostream>
 #include <sstream>
 #include <string>
+#include <string.h>
 #include <ctime>
 #include <algorithm>
 #include <cstdlib>
@@ -12,8 +13,7 @@
 #include "leveldb/filter_policy.h"
 #include "leveldb/write_batch.h"
 
-#define deli_key_addr "$$"
-#define deli_addr_size "&&"
+#define delimiter "$$"
 #define deli_length 2
 
 using namespace std;
@@ -25,6 +25,7 @@ using std::cout;
 using std::cerr;
 using std::endl;
 using std::stringstream;
+using std::fstream;
 using leveldb::ReadOptions;
 using leveldb::Options;
 using leveldb::Status;
@@ -36,7 +37,7 @@ using leveldb::Iterator;
 typedef struct WiscKey {
   string dir;
   DB * leveldb;
-  FILE * logfile;
+  string logfile;
 } WK;
 
 static bool lsmt_get(DB * db, string &key, string &value)
@@ -89,14 +90,13 @@ static WK * open_wisckey(const string& dirname)
 {
 	WK * wk = new WK;
 	wk->leveldb = open_leveldb(dirname);
-  wk->dir = dirname;
-	wk->logfile = fopen("logfile","w+");
+    wk->dir = dirname;
+	wk->logfile = "logfile";
   return wk;
 }
 
 static void close_wisckey(WK * wk)
 {
-	fclose(wk->logfile);
   	delete wk->leveldb;
   	delete wk;
 }

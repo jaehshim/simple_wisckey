@@ -9,7 +9,7 @@ int main(int argc, char **argv)
         exit(1);
     }
 
-    for (unsigned int i = 0; i < 5; ++i)
+    for (unsigned int i = 0; i < 256; ++i)
     {
         ostringstream keyStream;
         keyStream << "Key" << i;
@@ -21,7 +21,7 @@ int main(int argc, char **argv)
         wisc_put(wk, keystr, valuestr);
     }
 
-    for (unsigned int i = 0; i < 5; ++i)
+    for (unsigned int i = 0; i < 256; ++i)
     {
         ostringstream keyStream;
         keyStream << "Key" << i;
@@ -43,6 +43,7 @@ int main(int argc, char **argv)
 
     close_wisckey(wk);
     destroy_leveldb("wisckey_test_dir");
-    //remove("logfile");
-    exit(0);
+    remove("logfile");
+    
+    return 0;
 }
