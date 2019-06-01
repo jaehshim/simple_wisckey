@@ -19,8 +19,9 @@
 #define DELIMITER "$$"
 #define DELI_LENGTH 2
 
+#define TOTAL_SIZE 1048576*1024
 #define KEY_SIZE 16
-#define VALUE_SIZE 1008
+#define VALUE_SIZE 16384-KEY_SIZE
 
 using namespace std;
 

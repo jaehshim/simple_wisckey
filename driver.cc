@@ -25,8 +25,9 @@ int main(int argc, char **argv)
         db = open_leveldb("testdb");
     }
 
+	cout << "run count : " << TOTAL_SIZE / (KEY_SIZE+VALUE_SIZE) << endl;
     startTimer();
-    for (unsigned int i = 0; i < 1024*1024; ++i)
+    for (unsigned int i = 0; i < TOTAL_SIZE / (KEY_SIZE+VALUE_SIZE); ++i)
     {
         ostringstream keyStream;
         char ch;
