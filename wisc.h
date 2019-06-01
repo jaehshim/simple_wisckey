@@ -90,7 +90,7 @@ static WK * open_wisckey(const string& dirname)
 	WK * wk = new WK;
 	wk->leveldb = open_leveldb(dirname);
   wk->dir = dirname;
-	wk->logfile = fopen("logfile","wb+");
+	wk->logfile = fopen("logfile","w+");
   return wk;
 }
 

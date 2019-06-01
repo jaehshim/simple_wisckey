@@ -9,7 +9,7 @@ int main(int argc, char **argv)
         exit(1);
     }
 
-    for (unsigned int i = 0; i < 256; ++i)
+    for (unsigned int i = 0; i < 5; ++i)
     {
         ostringstream keyStream;
         keyStream << "Key" << i;
@@ -21,7 +21,7 @@ int main(int argc, char **argv)
         wisc_put(wk, keystr, valuestr);
     }
 
-    for (unsigned int i = 0; i < 256; ++i)
+    for (unsigned int i = 0; i < 5; ++i)
     {
         ostringstream keyStream;
         keyStream << "Key" << i;

@@ -1,15 +1,20 @@
 #include "wisc.h"
 
+
+
 void wisc_put(WK *wk, string &key, string &value)
 {
+	long offset = ftell(wk->logfile);
+	long size = value.length();
+	//cout << "wiscput" << endl;
 	ostringstream logStream;
 	logStream << key << deli_key_addr << value;
 	string logstr = logStream.str();
 	fwrite(&logstr, value.length() + 1, 1, wk->logfile); // write value to vlog
 
 
-	long offset = ftell(wk->logfile);
-	long size = value.length();
+	
+	cout << "offset " << offset << "size " << size << endl;
 	string value_addr ;
 	string value_size ;
 	value_addr = to_string(offset);
@@ -22,7 +27,10 @@ void wisc_put(WK *wk, string &key, string &value)
 
 bool wisc_get(WK *wk, string &key, string &value)
 {
+	//cout << "wiscget" << endl;
 	string lsmstr;
+	//cout << "1" << endl;
+	cout << key << endl;
 	const bool found = lsmt_get(wk->leveldb, key, lsmstr);
 	if (!found)
 		return false;
@@ -33,26 +41,34 @@ bool wisc_get(WK *wk, string &key, string &value)
 	if((pos = lsmstr.find(deli_addr_size)) != string::npos) // find delimeter
 	{
 		value_addr_str = lsmstr.substr(0, pos);
+		cout << value_addr_str << endl;
 		lsmstr.erase(0, pos + deli_length);
 		value_size_str = lsmstr;
+		cout << value_size_str << endl;
+
 	}
 	else
 	{
 		cout << "lsmt error" << endl ;
 		exit(1);	
 	}
+	//cout << "2" << endl;
+
 	long value_addr = stol(value_addr_str);
 	long value_size = stol(value_size_str);
 	
 		// cout << ftell(wk->logfile) << endl;
 	fseek(wk->logfile, value_addr, SEEK_SET);
 	// cout << ftell(wk->logfile) << endl;
+	//cout << "3" << endl;
 
-	string * buff;
+	char buff[value_size+1];
 
 	fread(buff, value_size, 1, wk->logfile);
 	// cout << buffer << endl;
-	value = *buff;
+	//cout << "4" << endl;
+	cout << buff << endl;
+	exit(1);
 	
 	//rewind(wk->logfile);
 	return true;
