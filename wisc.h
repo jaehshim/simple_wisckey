@@ -11,6 +11,7 @@
 #include <fstream>
 #include <sys/time.h>
 #include <unistd.h>
+#include <chrono>
 #include "leveldb/db.h"
 #include "leveldb/filter_policy.h"
 #include "leveldb/write_batch.h"
@@ -18,8 +19,8 @@
 #define DELIMITER "$$"
 #define DELI_LENGTH 2
 
-#define KEY_SIZE 10
-#define VALUE_SIZE 1014
+#define KEY_SIZE 16
+#define VALUE_SIZE 1008
 
 using namespace std;
 
@@ -108,3 +109,6 @@ static void close_wisckey(WK * wk)
 
 void wisc_put(WK *wk, string &key, string &value);
 bool wisc_get(WK *wk, string &key, string &value);
+
+void startTimer();
+void stopTimer(const char *label);

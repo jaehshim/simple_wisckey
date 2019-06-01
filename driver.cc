@@ -4,20 +4,37 @@ int main(int argc, char **argv)
 {
     struct timeval start_point, end_point;
     double operating_time;
+    DB * db;
+    WK * wk;
 
-    WK *wk = open_wisckey("wisckeyDB");
-    if (wk == NULL)
+    int wisckey = atoi(argv[1]);
+
+    if (wisckey)
     {
-        cerr << "open failed!" << endl;
-        exit(1);
+        destroy_leveldb("wisckeyDB");
+        remove("logfile");
+        wk = open_wisckey("wisckeyDB");
+        if (wk == NULL)
+        {
+            cerr << "open failed!" << endl;
+            exit(1);
+        }
+    }
+    else {
+        destroy_leveldb("testdb");
+        db = open_leveldb("testdb");
     }
 
-    gettimeofday(&start_point, NULL);
+    startTimer();
     for (unsigned int i = 0; i < 1024*1024; ++i)
     {
         ostringstream keyStream;
         char ch;
-        for (int j = 0; j<KEY_SIZE; j++) {
+        
+        for (int j = 0; j<KEY_SIZE-3; j++) 
+            keyStream << 'A';
+
+        for (int j = 0; j<3; j++) {
             ch = rand()%26 + 'A';
             keyStream << ch;
         }
@@ -30,13 +47,15 @@ int main(int argc, char **argv)
 
         string keystr = keyStream.str();
         string valuestr = valueStream.str();
-        wisc_put(wk, keystr, valuestr);
+
+        if (wisckey)
+            wisc_put(wk, keystr, valuestr);
+        else
+            lsmt_put(db, keystr, valuestr);
     }
-    gettimeofday(&end_point, NULL);
+    stopTimer("WiscKey load time");
 
     operating_time = end_point.tv_sec - start_point.tv_sec;
-    printf("WiscKey load time %lf s\n", operating_time);
-
 
     // for (unsigned int i = 0; i < 256; ++i)
     // {
@@ -57,9 +76,9 @@ int main(int argc, char **argv)
     //     }
     // }
 
-    close_wisckey(wk);
-//    destroy_leveldb("wisckey_test_dir");
-//    remove("logfile");
+    if (wisckey)
+        close_wisckey(wk);
+
     
     return 0;
 }

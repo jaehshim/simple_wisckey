@@ -13,6 +13,7 @@ void wisc_put(WK *wk, string &key, string &value)
 	logStream << input;
 
     logStream.flush();
+    logStream.sync();
 
     logStream.close();
 
@@ -79,4 +80,22 @@ bool wisc_get(WK *wk, string &key, string &value)
 	}
 
 	return true;
+}
+
+void timer (bool start = true, const char *label = 0) {
+    static chrono::system_clock::time_point startTime;
+    if (start) {
+        startTime = chrono::system_clock::now();
+    } else {
+        chrono::system_clock::time_point endTime = chrono::system_clock::now();
+        printf("Elapsed Time (%s): %.6lf s\n", label, chrono::duration_cast<chrono::microseconds>(endTime - startTime).count() / 1000.0 / 1000.0);
+    }
+}
+
+void startTimer() {
+    timer(true);
+}
+
+void stopTimer(const char *label) {
+    timer(false, label);
 }
