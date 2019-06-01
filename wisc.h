@@ -9,12 +9,17 @@
 #include <algorithm>
 #include <cstdlib>
 #include <fstream>
+#include <sys/time.h>
+#include <unistd.h>
 #include "leveldb/db.h"
 #include "leveldb/filter_policy.h"
 #include "leveldb/write_batch.h"
 
-#define delimiter "$$"
-#define deli_length 2
+#define DELIMITER "$$"
+#define DELI_LENGTH 2
+
+#define KEY_SIZE 10
+#define VALUE_SIZE 1014
 
 using namespace std;
 
