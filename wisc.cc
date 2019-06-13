@@ -14,7 +14,8 @@ void wisc_put(WK *wk, string &key, string &value)
     strcpy(ch, input.c_str());
 
     if (FILE_SIZE - (wk->head%FILE_SIZE) > size) {
-        logStream.seekp(wk->head, ios::beg);
+        long long off = wk->head % FILE_SIZE;
+        logStream.seekp(off, ios::beg);
         logStream.write(ch, size);
         wk->head += size;
     }
