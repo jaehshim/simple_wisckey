@@ -4,20 +4,39 @@
 
 void wisc_put(WK *wk, string &key, string &value)
 {
-	fstream logStream(wk->logfile, fstream::out | fstream::app);
+    fstream logStream(wk->logfile, fstream::out | fstream::in);
 
-    long offset = logStream.tellp();
     string input = key + DELIMITER + value;
-    long size = input.length();
 
-	logStream << input;
+    long long offset = wk->head;
+    long long size = input.length();
+    char ch[size];
+    strcpy(ch, input.c_str());
+
+    if (FILE_SIZE - (wk->head%FILE_SIZE) > size) {
+        logStream.seekp(wk->head, ios::beg);
+        logStream.write(ch, size);
+        wk->head += size;
+    }
+    else
+    {
+      cout << "else" << endl;
+		// TODO: write 2번으로 끝나게 최적화
+        for (int j = 0; j < size; j++)
+        {
+            long long off = wk->head % FILE_SIZE;
+            logStream.seekp(off, ios::beg);
+            logStream.write(&ch[j], 1);
+            wk->head++;
+        }
+    }
 
     logStream.flush();
     logStream.sync();
 
     logStream.close();
 
-//	cout << "offset " << offset << "size " << size << endl;
+    //	cout << "offset " << offset << "size " << size << endl;
 
 	string value_addr ;
 	string value_size ;
@@ -58,13 +77,20 @@ bool wisc_get(WK *wk, string &key, string &value)
 
 	long value_addr = stol(value_addr_str);
 	long value_size = stol(value_size_str);
-	
+
     fstream infile(wk->logfile);
-
-    infile.seekg(value_addr, ios::beg);
+    int offset = value_addr;
     string data(value_size, '\0');
+    
+    // TODO : write이랑 똑같게
+    for (int i = 0; i < value_size; i++)
+    {
+        offset = offset % FILE_SIZE;
+        infile.seekg(offset, ios::beg);
 
-    infile.read(&data[0], value_size);
+        infile.read(&data[i], 1);
+        offset++;
+    }
 
     infile.close();
 
