@@ -18,7 +18,6 @@
 
 #define DELIMITER "$$"
 #define GC_DELIMITER "##"
-#define SELECRIVE "@@"
 #define DELI_LENGTH 2
 
 #define TOTAL_SIZE 1048576 * 1024
@@ -27,6 +26,9 @@
 
 #define FILE_SIZE 104857600 // 100MB
 //#define FILE_SIZE 1610612736 // 1.5GB
+
+#define SELECTIVE_THRESHOLD 18
+#define SELECRIVE "@"
 
 #define GC_DEMAND 0
 

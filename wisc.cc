@@ -2,23 +2,34 @@
 
 void wisc_put(WK *wk, string &key, string &value)
 {
+    if (value.length() <= SELECTIVE_THRESHOLD) // selective KV
+    {
+        string input = SELECRIVE + value;
+        long long offset = wk->head;
+        long long size = input.length();
+
+	    lsmt_put(wk->leveldb, key, input); // write to lsmt
+
+        return;
+    }
 
     string input = key + DELIMITER + value + GC_DELIMITER;
 
     long long offset = wk->head;
     long long size = input.length();
+
     char ch[size];
 
-    int gc_flag = 1;
+    // int gc_flag = 1;
 
-    while (gc_flag) // GC를 해도 충분한 공간을 만들지 못한 경우
-    {
-        gc_flag = gc_check(wk, value.length());
-        if (gc_flag)
-        {
-            gc_mech(wk);
-        }
-    }
+    // while (gc_flag) // GC를 해도 충분한 공간을 만들지 못한 경우
+    // {
+    //     gc_flag = gc_check(wk, value.length());
+    //     if (gc_flag)
+    //     {
+    //         gc_mech(wk);
+    //     }
+    // }
 
     strcpy(ch, input.c_str());
 
@@ -67,6 +78,16 @@ bool wisc_get(WK *wk, string &key, string &value)
 	size_t pos = 0;
 	string token;
     int num;
+
+    if((lsmstr.find(SELECRIVE)) != string::npos) // selective KV
+	{
+        lsmstr.erase(0, 1);
+        value = lsmstr;
+
+        cout << "selective KV" << endl;
+        
+        return true;
+    }
 
 	if((pos = lsmstr.find(DELIMITER)) != string::npos) // find delimeter
 	{
