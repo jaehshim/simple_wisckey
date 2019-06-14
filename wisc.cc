@@ -2,7 +2,6 @@
 
 void wisc_put(WK *wk, string &key, string &value)
 {
-//    fstream logStream(wk->logfile, fstream::out | fstream::in);
 
     string input = key + DELIMITER + value + GC_DELIMITER;
 
@@ -17,7 +16,7 @@ void wisc_put(WK *wk, string &key, string &value)
         gc_flag = gc_check(wk, value.length());
         if (gc_flag)
         {
-            gc_mech();
+            gc_mech(wk);
         }
     }
 
@@ -25,7 +24,7 @@ void wisc_put(WK *wk, string &key, string &value)
 
     if (FILE_SIZE - (wk->head%FILE_SIZE) > size) {
         long long off = wk->head % FILE_SIZE;
-    //    logStream.seekp(off, ios::beg);
+        wk->logStream.seekp(off, ios::beg);
         wk->logStream.write(ch, size);
         wk->head += size;
     }
@@ -44,10 +43,6 @@ void wisc_put(WK *wk, string &key, string &value)
 
     wk->logStream.flush();
     wk->logStream.sync();
-
-    //    logStream.close();
-
-    //	cout << "offset " << offset << "size " << size << endl;
 
     string value_addr ;
 	string value_size ;
@@ -94,13 +89,25 @@ bool wisc_get(WK *wk, string &key, string &value)
     string data(value_size, '\0');
     
     // TODO : write이랑 똑같게
-    for (int i = 0; i < value_size; i++)
+
+    if (FILE_SIZE - (offset % FILE_SIZE) > value_size)
     {
         offset = offset % FILE_SIZE;
         infile.seekg(offset, ios::beg);
+        infile.read(&data[0], value_size);
+    }
+    else
+    {
+        cout << "else read" << endl;
+        // TODO: write 2번으로 끝나게 최적화
+        for (int i = 0; i < value_size; i++)
+        {
+            offset = offset % FILE_SIZE;
+            infile.seekg(offset, ios::beg);
 
-        infile.read(&data[i], 1);
-        offset++;
+            infile.read(&data[i], 1);
+            offset++;
+        }
     }
 
     infile.close();
@@ -172,14 +179,16 @@ int vlog_parser(WK *wk, string &key)
 }
 
 
-int valid_check(string &key, int &offset)
+int valid_check(WK * wk, string &key, int &offset)
 {
+    string lsmstr;
+
     const bool found = lsmt_get(wk->leveldb, key, lsmstr);
-	if (!found) // 말이 안되는 상황
-    {
-        print("WTF\n");
-        exit(1);
-    }
+	// if (!found) // 말이 안되는 상황
+    // {
+    //     print("WTF\n");
+    //     exit(1);
+    // }
     string value_addr_str;
 	string value_size_str;
 	size_t pos = 0;

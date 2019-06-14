@@ -18,6 +18,7 @@
 
 #define DELIMITER "$$"
 #define GC_DELIMITER "##"
+#define SELECRIVE "@@"
 #define DELI_LENGTH 2
 
 #define TOTAL_SIZE 1048576 * 1024
@@ -133,5 +134,8 @@ static void close_wisckey(WK *wk)
 void wisc_put(WK *wk, string &key, string &value);
 bool wisc_get(WK *wk, string &key, string &value);
 
+int gc_check(WK *wk, int valuesize);
+int gc_mech(WK *wk);
+int vlog_parser(WK *wk, string &key);
 void startTimer();
 void stopTimer(const char *label);
