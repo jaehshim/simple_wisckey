@@ -4,7 +4,7 @@ void wisc_put(WK *wk, string &key, string &value)
 {
 //    fstream logStream(wk->logfile, fstream::out | fstream::in);
 
-    string input = key + DELIMITER + value;
+    string input = key + DELIMITER + value + GC_DELIMITER;
 
     long long offset = wk->head;
     long long size = input.length();
@@ -93,13 +93,16 @@ bool wisc_get(WK *wk, string &key, string &value)
 
     infile.close();
 
-    if((pos = data.find(DELIMITER)) != string::npos) // find delimeter
-	{
-		data.erase(0, pos + DELI_LENGTH);
-		value = data;
-	}
-	else
-	{
+    if ((pos = data.find(DELIMITER)) != string::npos) // find delimeter
+    {
+        data.erase(0, pos + DELI_LENGTH);
+
+        data.erase(data.end()-2, data.end());
+
+        value = data;
+    }
+    else
+    {
 		cout << "lsmt error" << endl ;
 		exit(1);	
 	}

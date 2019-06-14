@@ -17,6 +17,7 @@
 #include "leveldb/write_batch.h"
 
 #define DELIMITER "$$"
+#define GC_DELIMITER "##"
 #define DELI_LENGTH 2
 
 #define TOTAL_SIZE 1048576 * 1024
