@@ -32,28 +32,7 @@ void wisc_put(WK *wk, string &key, string &value)
     // }
 
     strcpy(ch, input.c_str());
-
-    if (FILE_SIZE - (wk->head%FILE_SIZE) > size) {
-        long long off = wk->head % FILE_SIZE;
-        wk->logStream.seekp(off, ios::beg);
-        wk->logStream.write(ch, size);
-        wk->head += size;
-    }
-    else
-    {
-        cout << "else write" << endl;
-        // TODO: write 2번으로 끝나게 최적화
-        for (int j = 0; j < size; j++)
-        {
-            long long off = wk->head % FILE_SIZE;
-            wk->logStream.seekp(off, ios::beg);
-            wk->logStream.write(&ch[j], 1);
-            wk->head++;
-        }
-    }
-
-    wk->logStream.flush();
-    wk->logStream.sync();
+    vlog_write(wk, size, ch);
 
     string value_addr ;
 	string value_size ;
@@ -105,12 +84,33 @@ bool wisc_get(WK *wk, string &key, string &value)
 	long value_addr = stol(value_addr_str);
 	long value_size = stol(value_size_str);
 
-    fstream infile(wk->logfile);
     int offset = value_addr;
     string data(value_size, '\0');
     
     // TODO : write이랑 똑같게
 
+    vlog_read(wk, offset, value_size, data);
+    
+    if ((pos = data.find(DELIMITER)) != string::npos) // find delimeter
+    {
+        data.erase(0, pos + DELI_LENGTH);
+
+        data.erase(data.end()-2, data.end());
+
+        value = data;
+    }
+    else
+    {
+		cout << "vlog error" << endl ;
+		exit(1);	
+	}
+
+	return true;
+}
+
+void vlog_read(WK *wk, long long offset, long long value_size, string &data)
+{
+    fstream infile(wk->logfile);
     if (FILE_SIZE - (offset % FILE_SIZE) > value_size)
     {
         offset = offset % FILE_SIZE;
@@ -130,25 +130,122 @@ bool wisc_get(WK *wk, string &key, string &value)
             offset++;
         }
     }
-
     infile.close();
+}
 
-    if ((pos = data.find(DELIMITER)) != string::npos) // find delimeter
-    {
-        data.erase(0, pos + DELI_LENGTH);
 
-        data.erase(data.end()-2, data.end());
-
-        value = data;
+void vlog_write(WK *wk, long long size, char *ch)
+{
+    long long off = wk->head % FILE_SIZE;
+    if (FILE_SIZE - off > size) {
+        wk->logStream.seekp(off, ios::beg);
+        wk->logStream.write(ch, size);
+        wk->head += size;
     }
     else
     {
-		cout << "lsmt error" << endl ;
-		exit(1);	
-	}
+        cout << "else write" << endl;
+        // TODO: write 2번으로 끝나게 최적화
+        for (int j = 0; j < size; j++)
+        {            
+            off = wk->head % FILE_SIZE;
+            wk->logStream.seekp(off, ios::beg);
+            wk->logStream.write(&ch[j], 1);
+            wk->head++;
+        }
+    }
 
-	return true;
+    wk->logStream.flush();
+    wk->logStream.sync();
 }
+
+
+// int gc_check(WK *wk, int valuesize)
+// {
+//     int gc_policy = GC_DEMAND;
+//     int remain_space;
+
+//     if (wk->head > wk->tail)
+//     {
+//         remain_space = FILE_SIZE - (wk->head - wk->tail); // head front, tail back
+//     }
+//     else
+//     {
+//         remain_space = wk->tail - wk->head; // head is chasing the tail
+//     }
+        
+//     switch (gc_policy)
+//     {
+//     case GC_DEMAND:
+//         if(remain_space < valuesize)
+//         {
+//             return 1;
+//         }
+//         else return 0;
+//         break;
+    
+//     default:
+//         break;
+//     }
+// }
+
+// int gc_mech(WK *wk)
+// {
+//     int offset = 0; // 0 부터 시작하여 KVpair size 만큼씩 증가
+//     char *gc_buff;
+//     gc_buff = (char*)malloc(GC_CHUNK_SIZE) // valid data 저장용
+
+//     while (offset < GC_CHUNK_SIZE)
+//     {
+//         offset = vlog_parser(wk, offset, gc_buff);
+//     }
+
+
+// }
+
+// int vlog_parser(WK *wk, int vlog_offset, char *gc_buff) // vlog의 KVpair을 읽은 뒤 valid check하여 gc_buff에 담아줌, 다음 KVpair로 offset 증가
+// {
+//     string data(value_size, '\0');
+    
+//     vlog_read(WK *wk, vlog_offset, )
+// }
+
+
+// int valid_check(string &key, int &offset)
+// {
+//     string lsmstr;
+
+//     const bool found = lsmt_get(wk->leveldb, key, lsmstr);
+// 	if (!found) // 말이 안되는 상황
+//     {
+//         printf("WTF\n");
+//         exit(1);
+//     }
+//     string value_addr_str;
+// 	//string value_size_str;
+// 	size_t pos = 0;
+// 	string token;
+//     int num;
+
+// 	if((pos = lsmstr.find(DELIMITER)) != string::npos) // find delimeter
+// 	{
+// 		value_addr_str = lsmstr.substr(0, pos);
+
+// 		//lsmstr.erase(0, pos + DELI_LENGTH);
+// 		//value_size_str = lsmstr;
+// 	}
+// 	else
+// 	{
+// 		cout << "lsmt error" << endl ;
+// 		exit(1);	
+// 	}
+
+// 	long value_addr = stol(value_addr_str);
+// 	//long value_size = stol(value_size_str);
+
+//     return (offset == value_addr);
+
+// }
 
 void timer (bool start = true, const char *label = 0) {
     static chrono::system_clock::time_point startTime;
@@ -159,80 +256,6 @@ void timer (bool start = true, const char *label = 0) {
         printf("Elapsed Time (%s): %.6lf s\n", label, chrono::duration_cast<chrono::microseconds>(endTime - startTime).count() / 1000.0 / 1000.0);
     }
 }
-
-int gc_check(WK *wk, int valuesize)
-{
-    int gc_policy = GC_DEMAND;
-    int remain_space;
-
-    if (wk->head > wk->tail)
-    {
-        remain_space = FILE_SIZE - (wk->head - wk->tail); // head front, tail back
-    }
-    else
-    {
-        remain_space = wk->tail - wk->head; // head is chasing the tail
-    }
-        
-    switch (gc_policy)
-    {
-    case GC_DEMAND:
-        if(remain_space < valuesize)
-        {
-            return 1;
-        }
-        else return 0;
-        break;
-    
-    default:
-        break;
-    }
-}
-
-int gc_mech(WK *wk)
-{
-
-}
-
-int vlog_parser(WK *wk, string &key)
-{
-
-}
-
-
-int valid_check(WK * wk, string &key, int &offset)
-{
-    string lsmstr;
-
-    const bool found = lsmt_get(wk->leveldb, key, lsmstr);
-	// if (!found) // 말이 안되는 상황
-    // {
-    //     print("WTF\n");
-    //     exit(1);
-    // }
-    string value_addr_str;
-	string value_size_str;
-	size_t pos = 0;
-	string token;
-    int num;
-
-	if((pos = lsmstr.find(DELIMITER)) != string::npos) // find delimeter
-	{
-		value_addr_str = lsmstr.substr(0, pos);
-
-		lsmstr.erase(0, pos + DELI_LENGTH);
-		value_size_str = lsmstr;
-	}
-	else
-	{
-		cout << "lsmt error" << endl ;
-		exit(1);	
-	}
-
-	long value_addr = stol(value_addr_str);
-	long value_size = stol(value_size_str);
-}
-
 
 void startTimer() {
     timer(true);

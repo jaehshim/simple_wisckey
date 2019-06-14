@@ -136,6 +136,10 @@ static void close_wisckey(WK *wk)
 void wisc_put(WK *wk, string &key, string &value);
 bool wisc_get(WK *wk, string &key, string &value);
 
+void vlog_read(WK *wk, long long offset, long long value_size, string &data);
+void vlog_write(WK *wk, long long size, char *ch);
+
+
 int gc_check(WK *wk, int valuesize);
 int gc_mech(WK *wk);
 int vlog_parser(WK *wk, string &key);
