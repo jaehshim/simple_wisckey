@@ -9,6 +9,18 @@ void wisc_put(WK *wk, string &key, string &value)
     long long offset = wk->head;
     long long size = input.length();
     char ch[size];
+
+    int gc_flag = 1;
+
+    while (gc_flag) // GC를 해도 충분한 공간을 만들지 못한 경우
+    {
+        gc_flag = gc_check(wk, value.length());
+        if (gc_flag)
+        {
+            gc_mech();
+        }
+    }
+
     strcpy(ch, input.c_str());
 
     if (FILE_SIZE - (wk->head%FILE_SIZE) > size) {
@@ -119,6 +131,78 @@ void timer (bool start = true, const char *label = 0) {
         printf("Elapsed Time (%s): %.6lf s\n", label, chrono::duration_cast<chrono::microseconds>(endTime - startTime).count() / 1000.0 / 1000.0);
     }
 }
+
+int gc_check(WK *wk, int valuesize)
+{
+    int gc_policy = GC_DEMAND;
+    int remain_space;
+
+    if (wk->head > wk->tail)
+    {
+        remain_space = FILE_SIZE - (wk->head - wk->tail); // head front, tail back
+    }
+    else
+    {
+        remain_space = wk->tail - wk->head; // head is chasing the tail
+    }
+        
+    switch (gc_policy)
+    {
+    case GC_DEMAND:
+        if(remain_space < valuesize)
+        {
+            return 1;
+        }
+        else return 0;
+        break;
+    
+    default:
+        break;
+    }
+}
+
+int gc_mech(WK *wk)
+{
+
+}
+
+int vlog_parser(WK *wk, string &key)
+{
+
+}
+
+
+int valid_check(string &key, int &offset)
+{
+    const bool found = lsmt_get(wk->leveldb, key, lsmstr);
+	if (!found) // 말이 안되는 상황
+    {
+        print("WTF\n");
+        exit(1);
+    }
+    string value_addr_str;
+	string value_size_str;
+	size_t pos = 0;
+	string token;
+    int num;
+
+	if((pos = lsmstr.find(DELIMITER)) != string::npos) // find delimeter
+	{
+		value_addr_str = lsmstr.substr(0, pos);
+
+		lsmstr.erase(0, pos + DELI_LENGTH);
+		value_size_str = lsmstr;
+	}
+	else
+	{
+		cout << "lsmt error" << endl ;
+		exit(1);	
+	}
+
+	long value_addr = stol(value_addr_str);
+	long value_size = stol(value_size_str);
+}
+
 
 void startTimer() {
     timer(true);

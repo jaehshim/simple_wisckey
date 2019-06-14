@@ -27,6 +27,8 @@
 #define FILE_SIZE 104857600 // 100MB
 //#define FILE_SIZE 1610612736 // 1.5GB
 
+#define GC_DEMAND 0
+
 using namespace std;
 
 using leveldb::DB;
