@@ -1,10 +1,8 @@
 #include "wisc.h"
 
-
-
 void wisc_put(WK *wk, string &key, string &value)
 {
-    fstream logStream(wk->logfile, fstream::out | fstream::in);
+//    fstream logStream(wk->logfile, fstream::out | fstream::in);
 
     string input = key + DELIMITER + value;
 
@@ -15,31 +13,31 @@ void wisc_put(WK *wk, string &key, string &value)
 
     if (FILE_SIZE - (wk->head%FILE_SIZE) > size) {
         long long off = wk->head % FILE_SIZE;
-        logStream.seekp(off, ios::beg);
-        logStream.write(ch, size);
+    //    logStream.seekp(off, ios::beg);
+        wk->logStream.write(ch, size);
         wk->head += size;
     }
     else
     {
-      cout << "else" << endl;
-		// TODO: write 2번으로 끝나게 최적화
+        cout << "else write" << endl;
+        // TODO: write 2번으로 끝나게 최적화
         for (int j = 0; j < size; j++)
         {
             long long off = wk->head % FILE_SIZE;
-            logStream.seekp(off, ios::beg);
-            logStream.write(&ch[j], 1);
+            wk->logStream.seekp(off, ios::beg);
+            wk->logStream.write(&ch[j], 1);
             wk->head++;
         }
     }
 
-    logStream.flush();
-    logStream.sync();
+    wk->logStream.flush();
+    wk->logStream.sync();
 
-    logStream.close();
+    //    logStream.close();
 
     //	cout << "offset " << offset << "size " << size << endl;
 
-	string value_addr ;
+    string value_addr ;
 	string value_size ;
 	value_addr = to_string(offset);
 	value_size = to_string(size);
