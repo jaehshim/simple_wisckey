@@ -1,11 +1,24 @@
 #include "wisc.h"
 
+WK_HEAD *wk_head;
+
+void run_gc() {
+    int i;
+
+    while (1) {
+        i++;
+        if (i%2)
+            gc_check(wk_head->wk1, 1);
+        else
+            gc_check(wk_head->wk2, 1);
+    }
+}
+
 int main(int argc, char **argv)
 {
     struct timeval start_point, end_point;
     double operating_time;
     DB * db;
-    WK_HEAD * wk_head;
 
     int wisckey = atoi(argv[1]);
 
@@ -26,7 +39,10 @@ int main(int argc, char **argv)
         db = open_leveldb("testdb");
     }
 
-	cout << "run count : " << TOTAL_SIZE / (KEY_SIZE+VALUE_SIZE) << endl;
+    thread t1(run_gc);
+    t1.detach();
+
+    cout << "run count : " << TOTAL_SIZE / (KEY_SIZE + VALUE_SIZE) << endl;
     startTimer();
     for (unsigned int i = 0; i < TOTAL_SIZE / (KEY_SIZE+VALUE_SIZE); ++i)
     {
