@@ -24,13 +24,18 @@
 #define KEY_SIZE 16
 #define VALUE_SIZE 1024 - KEY_SIZE
 
-#define FILE_SIZE 104857600 // 100MB
+#define FILE_SIZE 5000 // 100MB
+//#define FILE_SIZE 104857600 // 100MB
 //#define FILE_SIZE 1610612736 // 1.5GB
 
 #define SELECTIVE_THRESHOLD 18
 #define SELECRIVE "@"
 
 #define GC_DEMAND 0
+#define GC_DEFAULT_READ_SIZE 1024
+#define GC_INCR 128
+//#define GC_CHUNK_SIZE 104857600 * 5
+#define GC_CHUNK_SIZE FILE_SIZE / 5
 
 using namespace std;
 
@@ -141,7 +146,9 @@ void vlog_write(WK *wk, long long size, char *ch);
 
 
 int gc_check(WK *wk, int valuesize);
-int gc_mech(WK *wk);
-int vlog_parser(WK *wk, string &key);
+int gc_proc(WK *wk);
+int vlog_parser(WK *wk, int &bias, int &length, char *key_buff, char *temp_buff);
+int valid_check(WK *wk, string &key, long long &offset);
+
 void startTimer();
 void stopTimer(const char *label);
