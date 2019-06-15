@@ -203,7 +203,6 @@ int gc_check(WK *wk, int valuesize)
         if (remain_space < valuesize + 5)
         {
             cout << "gc trig" << endl;
-            gc_proc(wk);
             return 1;
         }
         else
