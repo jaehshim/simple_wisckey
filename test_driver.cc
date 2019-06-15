@@ -29,7 +29,7 @@ int main(int argc, char **argv)
     //  t1.detach();
 
     startTimer();
-    for(int j=0; j<300; j++)
+    for(int j=0; j<100; j++)
     {
         for (unsigned int i = 0; i < 100; ++i)
         {
