@@ -1,17 +1,20 @@
 #include "wisc.h"
 
+string str_head = "head";
+string str_tail = "tail";
+
 void wisc_put(WK *wk, string &key, string &value)
 {
-    if (value.length() <= SELECTIVE_THRESHOLD) // selective KV
-    {
-        string input = SELECRIVE + value;
-        long long offset = wk->head;
-        long long size = input.length();
+    // if (value.length() <= SELECTIVE_THRESHOLD) // selective KV
+    // {
+    //     string input = SELECRIVE + value;
+    //     long long offset = wk->head;
+    //     long long size = input.length();
 
-        lsmt_put(wk->leveldb, key, input); // write to lsmt
+    //     lsmt_put(wk->leveldb, key, input); // write to lsmt
 
-        return;
-    }
+    //     return;
+    // }
 
     string input = key + DELIMITER + value + GC_DELIMITER;
 
@@ -25,7 +28,6 @@ void wisc_put(WK *wk, string &key, string &value)
     do
     {
         gc_flag = gc_check(wk, value.length());
-        cout << "out" << gc_flag << endl;
         if (gc_flag)
         {
             gc_proc(wk);
@@ -70,7 +72,7 @@ bool wisc_get(WK *wk, string &key, string &value)
         return true;
     }
 
-    if ((pos = lsmstr.find(DELIMITER)) != string::npos) // find delimeter
+    if ((pos = lsmstr.find(DELIMITER)) != string::npos) // find delimiter
     {
         value_addr_str = lsmstr.substr(0, pos);
 
@@ -93,7 +95,7 @@ bool wisc_get(WK *wk, string &key, string &value)
 
     vlog_read(wk, offset, value_size, data);
 
-    if ((pos = data.find(DELIMITER)) != string::npos) // find delimeter
+    if ((pos = data.find(DELIMITER)) != string::npos) // find delimiter
     {
         data.erase(0, pos + DELI_LENGTH);
 
@@ -226,6 +228,11 @@ int gc_proc(WK *wk)
         }
         wk->tail += length;
     }
+
+    string head_offset = to_string(wk->head);
+    string tail_offset = to_string(wk->tail);
+    lsmt_put(wk->leveldb, str_head, head_offset);
+    lsmt_put(wk->leveldb, str_tail, tail_offset);
 }
 
 int vlog_parser(WK *wk, int &bias, int &length, char *key_buff, char *temp_buff) // vlog의 KVpair을 읽은 뒤 valid check하여 gc_buff에 담아줌, 다음 KVpair로 offset 증가
@@ -284,7 +291,7 @@ int valid_check(WK *wk, string &key, long long &offset)
     string token;
     int num;
 
-    if ((pos = lsmstr.find(DELIMITER)) != string::npos) // find delimeter
+    if ((pos = lsmstr.find(DELIMITER)) != string::npos) // find delimiter
     {
         value_addr_str = lsmstr.substr(0, pos);
 

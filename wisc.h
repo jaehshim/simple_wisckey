@@ -24,8 +24,8 @@
 #define KEY_SIZE 16
 #define VALUE_SIZE 1024 - KEY_SIZE
 
-#define FILE_SIZE 5000 // 100MB
-//#define FILE_SIZE 104857600 // 100MB
+//#define FILE_SIZE 5000
+#define FILE_SIZE 104857600 // 100MB
 //#define FILE_SIZE 1610612736 // 1.5GB
 
 #define SELECTIVE_THRESHOLD 18
@@ -34,7 +34,6 @@
 #define GC_DEMAND 0
 #define GC_DEFAULT_READ_SIZE 1024
 #define GC_INCR 128
-//#define GC_CHUNK_SIZE 104857600 * 5
 #define GC_CHUNK_SIZE FILE_SIZE / 5
 
 using namespace std;
@@ -54,7 +53,6 @@ using std::fstream;
 using std::string;
 using std::stringstream;
 using std::vector;
-
 
 typedef struct WiscKey
 {
