@@ -32,16 +32,25 @@ void wisc_put(WK_HEAD *wk_head, string &key, string &value)
 
     char ch[size];
 
-    int gc_flag = 0;
+    // int gc_flag = 0;
 
-    do
-    {
-        gc_flag = gc_check(wk, value.length());
-        if (gc_flag)
-        {
-            gc_proc(wk);
-        }
-    } while (gc_flag); // GC를 해도 충분한 공간을 만들지 못한 경우
+    // do
+    // {
+    //     gc_flag = gc_check(wk, value.length());
+    //     if (gc_flag)
+    //     {
+    //         // thread t1(gc_proc, wk);
+    //         // cout << wk->head << ":::::" << wk->tail << endl;
+    //         // t1.detach();
+    //         int pid = fork();
+    //         if (pid == 0) {
+    //             gc_proc(wk);
+    //             cout << "exit" << endl;
+    //             exit(1);
+    //         }
+    //         //gc_proc(wk);
+    //     }
+    // } while (gc_flag); // GC를 해도 충분한 공간을 만들지 못한 경우
 
     strcpy(ch, input.c_str());
     vlog_write(wk, size, ch);
@@ -180,7 +189,7 @@ void vlog_write(WK *wk, long long size, char *ch)
     wk->logStream.sync();
 }
 
-int gc_check(WK *wk, int valuesize)
+int gc_check(WK *wk)
 {
     int gc_policy = GC_DEMAND;
     int remain_space;
@@ -200,7 +209,7 @@ int gc_check(WK *wk, int valuesize)
     {
     case GC_DEMAND:
 
-        if (remain_space < valuesize + 5)
+        if (remain_space < FILE_SIZE/4)
         {
             cout << "gc trig" << endl;
             gc_proc(wk);
