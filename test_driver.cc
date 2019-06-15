@@ -2,6 +2,18 @@
 
 WK_HEAD *wk_head;
 
+void run_gc() {
+    int i;
+
+    while (1) {
+        i++;
+        if (i%2)
+            gc_check(wk_head->wk1, 1);
+        else
+            gc_check(wk_head->wk2, 1);
+    }
+}
+
 int main(int argc, char **argv)
 {
     destroy_leveldb("wisckey_test_dir");
@@ -13,8 +25,11 @@ int main(int argc, char **argv)
         exit(1);
     }
 
+    //  thread t1(run_gc);
+    //  t1.detach();
+
     startTimer();
-    for(int j=0; j<100; j++)
+    for(int j=0; j<300; j++)
     {
         for (unsigned int i = 0; i < 100; ++i)
         {

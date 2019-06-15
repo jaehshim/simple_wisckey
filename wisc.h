@@ -26,7 +26,7 @@
 #define KEY_SIZE 16
 #define VALUE_SIZE 1024 - KEY_SIZE
 
-#define FILE_SIZE 5000
+#define FILE_SIZE 734003200
 //#define FILE_SIZE 104857600*5 // 500MB
 //#define FILE_SIZE 1610612736 // 1.5GB
 
@@ -36,7 +36,7 @@
 #define GC_DEMAND 0
 #define GC_DEFAULT_READ_SIZE 1024
 #define GC_INCR 128
-#define GC_CHUNK_SIZE FILE_SIZE / 5
+#define GC_CHUNK_SIZE 1024*3
 
 using namespace std;
 

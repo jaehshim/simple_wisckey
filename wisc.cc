@@ -37,10 +37,6 @@ void wisc_put(WK_HEAD *wk_head, string &key, string &value)
     do
     {
         gc_flag = gc_check(wk, value.length());
-        if (gc_flag)
-        {
-            gc_proc(wk);
-        }
     } while (gc_flag); // GC를 해도 충분한 공간을 만들지 못한 경우
 
     strcpy(ch, input.c_str());
@@ -200,7 +196,7 @@ int gc_check(WK *wk, int valuesize)
     {
     case GC_DEMAND:
 
-        if (remain_space < valuesize + 5)
+        if (remain_space < FILE_SIZE/4)
         {
             cout << "gc trig" << endl;
             gc_proc(wk);
