@@ -4,32 +4,22 @@ string str_head = "head";
 string str_tail = "tail";
 hash<string> hasher;
 
-void wisc_put(WK_HEAD *wk_head, string &key, string &value)
+void wisc_put(WK *wk, string &key, string &value)
 {
-    WK *wk;
+    // if (value.length() <= SELECTIVE_THRESHOLD) // selective KV
+    // {
+    //     string input = SELECRIVE + value;
+    //     long long offset = wk->head;
+    //     long long size = input.length();
 
-    size_t hash = hasher(key);
-    if (hash % 2)
-        wk = wk_head->wk1;
-    else
-       wk = wk_head->wk2;
+    //     lsmt_put(wk->leveldb, key, input); // write to lsmt
 
-    if (value.length() <= SELECTIVE_THRESHOLD) // selective KV
-    {
-        string input = SELECRIVE + value;
-        long long offset = wk->head;
-        long long size = input.length();
-
-        lsmt_put(wk->leveldb, key, input); // write to lsmt
-
-        return;
-    }
+    //     return;
+    // }
 
     string input = key + DELIMITER + value + GC_DELIMITER;
 
-    long long offset = wk->head;
     long long size = input.length();
-
     char ch[size];
 
     int gc_flag = 0;
@@ -40,8 +30,11 @@ void wisc_put(WK_HEAD *wk_head, string &key, string &value)
         if (gc_flag)
         {
             gc_proc(wk);
+            cout << wk->head << ":::::" << wk->tail << endl;
         }
     } while (gc_flag); // GC를 해도 충분한 공간을 만들지 못한 경우
+
+    long long offset = wk->head;
 
     strcpy(ch, input.c_str());
     vlog_write(wk, size, ch);
@@ -56,16 +49,10 @@ void wisc_put(WK_HEAD *wk_head, string &key, string &value)
     lsmt_put(wk->leveldb, key, lsmstr); // write to lsmt
 }
 
-bool wisc_get(WK_HEAD *wk_head, string &key, string &value)
+bool wisc_get(WK *wk, string &key, string &value)
 {
+    //cout << "wiscget" << endl;
     string lsmstr;
-    WK *wk;
-
-    size_t hash = hasher(key);
-    if (hash % 2)
-        wk = wk_head->wk1;
-    else
-       wk = wk_head->wk2;
 
     const bool found = lsmt_get(wk->leveldb, key, lsmstr);
     if (!found)
@@ -82,7 +69,6 @@ bool wisc_get(WK_HEAD *wk_head, string &key, string &value)
         value = lsmstr;
 
         cout << "selective KV" << endl;
-    //    exit(1);
 
         return true;
     }
@@ -110,6 +96,7 @@ bool wisc_get(WK_HEAD *wk_head, string &key, string &value)
 
     vlog_read(wk, offset, value_size, data);
 
+    cout << data << endl;
     if ((pos = data.find(DELIMITER)) != string::npos) // find delimiter
     {
         data.erase(0, pos + DELI_LENGTH);
@@ -140,7 +127,6 @@ void vlog_read(WK *wk, long long offset, long long value_size, string &data)
     }
     else
     {
-        //    cout << "else read" << endl;
         // TODO: write 2번으로 끝나게 최적화
         for (int i = 0; i < value_size; i++)
         {
@@ -200,7 +186,7 @@ int gc_check(WK *wk, int valuesize)
     {
     case GC_DEMAND:
 
-        if (remain_space < valuesize + 5)
+        if (remain_space < FILE_SIZE/4)
         {
             cout << "gc trig" << endl;
             gc_proc(wk);
@@ -227,24 +213,32 @@ int gc_proc(WK *wk)
 
     while (bias < GC_CHUNK_SIZE)
     {
-        cout << "bias: " << bias << endl;
+    //    cout << "bias: " << bias << endl;
+        key_buff = (char *)calloc(GC_CHUNK_SIZE, sizeof(char)); // 임시 저장
         temp_buff = (char *)calloc(GC_CHUNK_SIZE, sizeof(char)); // 임시 저장
         validity = vlog_parser(wk, bias, length, key_buff, temp_buff);
-        
+
         if (validity)
         {
+            cout << "valid data" << endl;
             string value_addr;
             string value_size;
             value_addr = to_string(wk->head);
             value_size = to_string(length);
+
+            vlog_write(wk, length, temp_buff);
+            cout << length << " " << temp_buff << endl;
             ostringstream lsmStream;
             lsmStream << value_addr << DELIMITER << value_size; // lsmt string (value_addr, value_size)
             string lsmstr = lsmStream.str();
             string key = key_buff;
+            cout << key << endl;
             lsmt_put(wk->leveldb, key, lsmstr);
-            vlog_write(wk, length, temp_buff);
         }
+
         tail += length;
+        free(key_buff);
+        free(temp_buff);
     }
     wk->tail += tail;
     // string head_offset = to_string(wk->head);
@@ -263,11 +257,12 @@ int vlog_parser(WK *wk, int &bias, int &length, char *key_buff, char *temp_buff)
     long long size = GC_DEFAULT_READ_SIZE;
     long long offset = wk->tail + bias;
     string data;
+
     while (1)
     {
         string temp(size, '\0');
         vlog_read(wk, offset, size, temp);
-        temp += GC_INCR;
+        size += GC_INCR;
 
         if (temp.find(GC_DELIMITER) != string::npos)
         {
@@ -285,6 +280,7 @@ int vlog_parser(WK *wk, int &bias, int &length, char *key_buff, char *temp_buff)
     key = data.substr(0, pos);
 
     validity = valid_check(wk, key, offset);
+
     if (validity)
     {
         strcpy(key_buff, key.c_str());
@@ -299,7 +295,7 @@ int valid_check(WK *wk, string &key, long long &offset)
     string lsmstr;
     bool validity;
 
-    cout << key << endl;
+//    cout << key << endl;
     bool found = lsmt_get(wk->leveldb, key, lsmstr);
     if (!found) // vlog에 있는 key가 lsmt에 없는 상황
     {

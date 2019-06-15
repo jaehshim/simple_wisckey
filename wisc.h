@@ -26,7 +26,7 @@
 #define KEY_SIZE 16
 #define VALUE_SIZE 1024 - KEY_SIZE
 
-#define FILE_SIZE 5000
+#define FILE_SIZE 50500
 //#define FILE_SIZE 104857600*5 // 500MB
 //#define FILE_SIZE 1610612736 // 1.5GB
 
@@ -36,7 +36,7 @@
 #define GC_DEMAND 0
 #define GC_DEFAULT_READ_SIZE 1024
 #define GC_INCR 128
-#define GC_CHUNK_SIZE FILE_SIZE / 5
+#define GC_CHUNK_SIZE 3000
 
 using namespace std;
 
@@ -67,11 +67,6 @@ typedef struct WiscKey
     fstream logStream;
 
 } WK;
-
-typedef struct WiscKeyHead {
-    WK * wk1;
-    WK * wk2;
-} WK_HEAD;
 
 static bool lsmt_get(DB *db, string &key, string &value)
 {
@@ -118,46 +113,25 @@ static void wisckey_del(WK *wk, string &key)
     leveldb_del(wk->leveldb, key);
 }
 
-static WK_HEAD *open_wisckey(const string &dirname)
+static WK *open_wisckey(const string &dirname)
 {
-    string dir;
-    DB *leveldb;
+    WK *wk = new WK;
+    wk->leveldb = open_leveldb(dirname);
+    wk->dir = dirname;
+    wk->logfile = "logfile";
 
-    WK_HEAD * wk_head = new WK_HEAD;
-    wk_head->wk1 = new WK;
-    wk_head->wk2 = new WK;
-
-    leveldb = open_leveldb(dirname);
-    dir = dirname;
-
-    wk_head->wk1->dir = dir;
-    wk_head->wk1->leveldb = leveldb;
-    wk_head->wk1->logfile = "logfile1";
     ofstream createFile;
-    createFile.open(wk_head->wk1->logfile, fstream::trunc);
+    createFile.open(wk->logfile, fstream::trunc);
     if (createFile.fail())
-        cout << "truncate file 1 failed"<< endl;
+        cout << "truncate file failed"<< endl;
     createFile.close();
 
-    wk_head->wk1->head = 0;
-    wk_head->wk1->tail = 0;
+    wk->head = 0;
+    wk->tail = 0;
 
-    wk_head->wk1->logStream.open(wk_head->wk1->logfile, fstream::out | fstream::in);
+    wk->logStream.open(wk->logfile, fstream::out | fstream::in);
 
-    wk_head->wk2->dir = dir;
-    wk_head->wk2->leveldb = leveldb;
-    wk_head->wk2->logfile = "logfile2";
-    createFile.open(wk_head->wk2->logfile, fstream::trunc);
-    if (createFile.fail())
-        cout << "truncate file 2 failed"<< endl;
-    createFile.close();
-
-    wk_head->wk2->head = 0;
-    wk_head->wk2->tail = 0;
-
-    wk_head->wk2->logStream.open(wk_head->wk2->logfile, fstream::out | fstream::in);
-
-    return wk_head;
+    return wk;
 }
 
 static void close_wisckey(WK *wk)
@@ -166,8 +140,8 @@ static void close_wisckey(WK *wk)
     delete wk;
 }
 
-void wisc_put(WK_HEAD *wk, string &key, string &value);
-bool wisc_get(WK_HEAD *wk, string &key, string &value);
+void wisc_put(WK *wk, string &key, string &value);
+bool wisc_get(WK *wk, string &key, string &value);
 
 void vlog_read(WK *wk, long long offset, long long value_size, string &data);
 void vlog_write(WK *wk, long long size, char *ch);
