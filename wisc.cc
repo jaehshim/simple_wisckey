@@ -49,7 +49,7 @@ void wisc_put(WK *wk, string &key, string &value)
 
     do
     {
-        gc_flag = gc_check(wk, (key.length() + value.length() + DELI_LENGTH * 2));
+        gc_flag = gc_check(wk, input.length());
         if (gc_flag)
         {
             //cout << wk->head << ":::::" << wk->tail << endl;
