@@ -1,6 +1,7 @@
 #pragma once
 #include <assert.h>
 #include <vector>
+#include <map>
 #include <iostream>
 #include <sstream>
 #include <string>
@@ -18,19 +19,24 @@
 
 #define DELIMITER "$$"
 #define GC_DELIMITER "##"
+#define COLD_DELIMITER "??"
 #define DELI_LENGTH 2
 
 #define TOTAL_SIZE 1048576 * 1024
 #define KEY_SIZE 16
 #define VALUE_SIZE 1024 - KEY_SIZE
 
-#define FILE_SIZE 104857600 // 100MB
+#define FILE_SIZE 50000 // 100MB
+//#define FILE_SIZE 104857600 // 100MB
 //#define FILE_SIZE 1610612736 // 1.5GB
 
 #define SELECTIVE_THRESHOLD 18
 #define SELECRIVE "@"
 
 #define GC_DEMAND 0
+#define GC_DEFAULT_READ_SIZE FILE_SIZE / 100
+#define GC_INCR FILE_SIZE / 1000
+#define GC_CHUNK_SIZE FILE_SIZE / 5
 
 using namespace std;
 
@@ -56,8 +62,12 @@ typedef struct WiscKey
     string dir;
     DB *leveldb;
     string logfile;
-    long long head, tail;
+    string coldfile;
+    long long head;
+    long long tail;
+    long long chead;
     fstream logStream;
+    fstream coldStream;
 
 } WK;
 
@@ -112,17 +122,26 @@ static WK *open_wisckey(const string &dirname)
     wk->leveldb = open_leveldb(dirname);
     wk->dir = dirname;
     wk->logfile = "logfile";
+    wk->coldfile = "coldfile";
 
     ofstream createFile;
     createFile.open(wk->logfile, fstream::trunc);
     if (createFile.fail())
         cout << "truncate file failed"<< endl;
     createFile.close();
+    
+    ofstream createFile2;
+    createFile2.open(wk->coldfile, fstream::trunc);
+    if (createFile2.fail())
+        cout << "truncate file failed"<< endl;
+    createFile2.close();
 
     wk->head = 0;
     wk->tail = 0;
+    wk->chead = 0;
 
     wk->logStream.open(wk->logfile, fstream::out | fstream::in);
+    wk->coldStream.open(wk->coldfile, fstream::out | fstream::in);
 
     return wk;
 }
@@ -136,12 +155,16 @@ static void close_wisckey(WK *wk)
 void wisc_put(WK *wk, string &key, string &value);
 bool wisc_get(WK *wk, string &key, string &value);
 
-void vlog_read(WK *wk, long long offset, long long value_size, string &data);
+void vlog_read(WK *wk, long long offset, long long value_size, string &data, int gc_mode);
 void vlog_write(WK *wk, long long size, char *ch);
+void clog_read(WK *wk, long long offset, long long value_size, string &data);
+void clog_write(WK *wk, long long size, char *ch);
 
 
-int gc_check(WK *wk, int valuesize);
-int gc_mech(WK *wk);
-int vlog_parser(WK *wk, string &key);
+int gc_check(WK *wk, long long valuesize);
+int gc_proc(WK *wk);
+int vlog_parser(WK *wk, long long &bias, long long &length, char *key_buff, char *temp_buff);
+int valid_check(WK *wk, string &key, long long &offset);
+
 void startTimer();
 void stopTimer(const char *label);
