@@ -2,7 +2,7 @@
 
 int main(int argc, char **argv)
 {
-        destroy_leveldb("wisckey_test_dir");
+    destroy_leveldb("wisckey_test_dir");
     remove("logfile");
     remove("coldfile");
     WK *wk = open_wisckey("wisckey_test_dir");
