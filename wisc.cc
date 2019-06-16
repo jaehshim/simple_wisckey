@@ -49,7 +49,7 @@ void wisc_put(WK *wk, string &key, string &value)
 
     do
     {
-        gc_flag = gc_check(wk, (key.length() + value.length() + DELI_LENGTH * 2));
+        gc_flag = gc_check(wk, input.length());
         if (gc_flag)
         {
             //cout << wk->head << ":::::" << wk->tail << endl;
@@ -79,12 +79,6 @@ bool wisc_get(WK *wk, string &key, string &value)
     if (ref_key_store.find(key) != ref_key_store.end()) // key가 storage에 있으면
     {
         ref_key_store[key]++;
-    }
-    else
-    {
-        cout << "get before put?"<< key << endl;
-        //print_map(ref_key_store);
-        ref_key_store.insert(pair<string,int>(key, 0));
     }
 
 	//cout << "wiscget" << endl;
@@ -144,7 +138,6 @@ bool wisc_get(WK *wk, string &key, string &value)
     else
     {
 		cout << "vlog error" << endl ;
-        cout << data << endl;
 		exit(1);	
 	}
 
@@ -325,11 +318,8 @@ int gc_proc(WK *wk)
             }
             else // cold data
             {
-                
-                cout << "cold separation" << endl;
-                cout << key << ":tail:" << wk->tail << endl;
-                string tag_value_addr ;
-                string tag_value_size ;
+                string tag_value_addr;
+                string tag_value_size;
                 string tagged_value;
                 char *tag_buff;
                 tag_buff = (char *)calloc(GC_CHUNK_SIZE, sizeof(char));
